@@ -80,9 +80,9 @@ class WordFormDefault(AbstractOutputFormWord):
 
         #Set style
         if center == 1:
-            self.setStyle(p,p_run,alignment=WD_ALIGN_PARAGRAPH.CENTER,typeFace=typeFace)
+            self.setStyle(p,p_run,alignment=WD_ALIGN_PARAGRAPH.CENTER,typeFace=typeFace,fontSize=size)
         else:
-            self.setStyle(p,p_run,left_ident=left_ident,typeFace=typeFace)
+            self.setStyle(p,p_run,left_ident=left_ident,typeFace=typeFace,fontSize=size)
         #Write to target file
         self.write(savePath=None)
     """
@@ -107,7 +107,7 @@ class WordFormDefault(AbstractOutputFormWord):
 
         #Set style
         if center == 1:
-            self.setStyle(p,p_run,center=WD_ALIGN_PARAGRAPH.CENTER,bold=bold,fontSize=size)_
+            self.setStyle(p,p_run,center=WD_ALIGN_PARAGRAPH.CENTER,bold=bold,fontSize=size)
         else:
             self.setStyle(p,p_run,left_ident=left_ident,bold=bold,fontSize=size)
 
