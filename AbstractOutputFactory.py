@@ -75,7 +75,7 @@ class WordFormDefault(AbstractOutputFormWord):
             p = self.document.add_heading("",level)
             p_run = p.add_run(content)
         else:
-            p = self.document.add_heding("",level)
+            p = self.document.add_heading("",level)
             p_run = p.add_run("Default heading")
 
         #Set style

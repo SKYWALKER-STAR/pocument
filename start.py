@@ -21,21 +21,21 @@ def taskNo(task):
     elif task == "监控巡检":
         task = "二、监控巡检"
         return task
+    elif task == "故障处理":
+        task = "三、故障处理"
+        return task
     elif task == "安全整改":
-        task = "三、安全整改"
+        task = "四、安全整改"
         return task
     elif task == "变更发版":
-        task = "四、变更发版"
-        return task
-    elif task == "故障处理":
-        task = "五、故障处理"
+        task = "五、变更发版"
         return task
 
 #According to content of excel write differendly using regular expression
 def matchwrite(content,out:AbstractOutputFactory):
     keywords = {'非常态化任务','监控巡检','安全整改','变更发版','故障处理'}
     token_specification = [
-                ('BINGO',r'[\u4e00-\u9fa5]*'),
+                ('BINGO',r'[\u4e00-\u9fa5a-zA-Z]*'),
                 ('CONTENT',r'[\u4e00-\u9fa5]|[\W]'),
                 ('END',r'END'),
                 ('SKIP',r'None'),
@@ -97,6 +97,11 @@ def daliyReport(factoryi:abi.AbstractInputFactory,factoryo:abo.AbstractOutputFac
                 content = f"{taskCount}." + content
                 wordOut.OutputParagraph(content)
                 taskCount += 1
+def exec(excel,word,title,excelSheet="Sheet1"):
+    daliyReport(abi.InputForExcel(excel,excelSheet),
+                abo.OutputForWord(word),title)
+    return 0
+
 
 if __name__ == "__main__":
 
@@ -107,5 +112,4 @@ if __name__ == "__main__":
     parser.add_argument('--report-title',dest='title',type=str,help='report title',required=True)
     args = parser.parse_args()
 
-    daliyReport(abi.InputForExcel(args.exs,args.exss),
-                abo.OutputForWord(args.wot),args.title)
+    exec(excel=args.exs,excelSheet=args.exss,word=args.wot,title=args.title)
