@@ -55,6 +55,22 @@ class ExcelInputFormDefault(AbstractInputFormExcel):
                 continue
             else:
                 yield i
+    def getColLoc(self,colName):
+        return self.df.columns.get_loc(colName)
+
+    def getRowIndex(self,colName,taskName):
+        return self.df.index[self.df[colName] == taskName]
+
+    def getContentAccordingIndex(self,index):
+        return self.df[index]
+
+    def traversal(self,start,endFlag):
+            rv = self.df.iloc(start)
+            if rv == endFlag:
+                yield -1
+            else:
+                yield rv
 
 if __name__ == '__main__':
     print("Abstrace factory for input")
+

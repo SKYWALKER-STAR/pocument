@@ -8,11 +8,14 @@ import AbstractInputFactory as abi
 import re
 import argparse
 import sys
+import numpy as np
 
 #global noTask
 taskName = ''
 noTask = "今日无"
 taskCount = 1
+
+keywords = {'非常态化任务','监控巡检','安全整改','变更发版','故障处理'}
 
 def taskNo(task):
     if task == "非常态化任务":
@@ -33,7 +36,6 @@ def taskNo(task):
 
 #According to content of excel write differendly using regular expression
 def matchwrite(content,out:AbstractOutputFactory):
-    keywords = {'非常态化任务','监控巡检','安全整改','变更发版','故障处理'}
     token_specification = [
                 ('BINGO',r'[\u4e00-\u9fa5a-zA-Z]*'),
                 ('CONTENT',r'[\u4e00-\u9fa5]|[\W]'),
@@ -51,6 +53,7 @@ def matchwrite(content,out:AbstractOutputFactory):
         kind = mo.lastgroup
         value = mo.group()
         column = mo.start() - line_start
+        global keywords
         if kind == 'BINGO':
             if value in keywords:
                 out.OutputTitle(taskNo(value),level=3,center=0,size=12)
@@ -73,6 +76,7 @@ def matchwrite(content,out:AbstractOutputFactory):
         contentStr = ",".join(new_list)
         yield contentStr
 
+
 def daliyReport(factoryi:abi.AbstractInputFactory,factoryo:abo.AbstractOutputFactory,title): 
 
     excelIn = factoryi.createFormDefault()
@@ -84,19 +88,35 @@ def daliyReport(factoryi:abi.AbstractInputFactory,factoryo:abo.AbstractOutputFac
     wordOut.OutputTitle(title,level=1,size=18)
     i = 0
     for colName in colNames:
+        col = excelIn.getColLoc(colName)
         if i == 0:
           wordOut.OutputTitle(colName,level=2,size=14)
           i = 1
         else:
           wordOut.PageBreak()
           wordOut.OutputTitle(colName,level=2,size=14)
-        global taskCount
-        taskCount = 1
+
         for task in taskList(colName):
-            for content in matchwrite(task,wordOut):
-                content = f"{taskCount}." + content
-                wordOut.OutputParagraph(content)
-                taskCount += 1
+            if task in keywords:
+                wordOut.OutputTitle(taskNo(task),level=3,size=12,center=0)
+                row = excelIn.getRowIndex(colName,task)
+                row += 1
+                count = 1
+                while(1):
+                    rv = excelIn.df.iloc[row._data[0],col]
+                    row += 1
+                    if rv == "END":
+                        count = 1
+                        break
+                    elif rv == "NOTHING":
+                        wordOut.OutputParagraph((noTask + task))
+                        break
+                    elif rv is np.nan:
+                        continue
+                    else:
+                        wordOut.OutputParagraph(content=(str(count) + "." + rv))
+                        count += 1
+
 def exec(excel,word,title,excelSheet="Sheet1"):
     daliyReport(abi.InputForExcel(excel,excelSheet),
                 abo.OutputForWord(word),title)
