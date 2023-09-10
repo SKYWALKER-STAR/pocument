@@ -1,10 +1,11 @@
 # *coding=utf-8
-
 #This is file should be implemented by user them self using AbstractOutputFactory and AbstractInputFactory
+
 from __future__ import annotations
 import AbstractOutputFactory as abo
 from docx.shared import RGBColor
 import AbstractInputFactory as abi
+import pandas as pd
 import re
 import argparse
 import sys
@@ -14,7 +15,6 @@ import numpy as np
 taskName = ''
 noTask = "今日无"
 taskCount = 1
-
 keywords = {'非常态化任务','监控巡检','安全整改','变更发版','故障处理'}
 
 def taskNo(task):
@@ -76,7 +76,7 @@ def matchwrite(content,out:AbstractOutputFactory):
         contentStr = ",".join(new_list)
         yield contentStr
 
-
+#Generate weekly report
 def daliyReport(factoryi:abi.AbstractInputFactory,factoryo:abo.AbstractOutputFactory,title): 
 
     excelIn = factoryi.createFormDefault()
@@ -117,14 +117,48 @@ def daliyReport(factoryi:abi.AbstractInputFactory,factoryo:abo.AbstractOutputFac
                         wordOut.OutputParagraph(content=(str(count) + "." + rv))
                         count += 1
 
-def exec(excel,word,title,excelSheet="Sheet1"):
+#Generate report weekly
+def weeklyReport(factoryi:abi.AbstarctInputFactory=None,factoryo:abo.AbstractOutputFactory=None,title=None,inputFileList=None):
+
+    liAll = []
+    systemName = []
+    global keywords
+    excelIn = factoryi.createExcelWeekReport(inputFileList=inputFileList)
+    dfList = excelIn.getDfList
+
+    for i in dfList(inputFileList = inputFileList):
+        colNames = excelIn.getColumnNameArray(df=i,flag=1)
+        systemName = colNames
+        li = excelIn.getContent(i,colNames,keyWord="非常态化任务")
+        liAll.append(li)
+
+    dicNew = dict()
+    for infoList in liAll:
+        for dic in infoList:
+            if dic['Name'] in systemName:
+                if dic['Name'] in dicNew:
+                    dicNew[dic['Name']] = dicNew[dic['Name']] + dic['Msg']
+                else:
+                    dicNew[dic['Name']] = dic['Msg']
+
+    seri = pd.Series(dicNew)
+    excelIn.saveFromList(seriData=seri,savePath="./test3.xlsx")
+    return 0
+
+#Entry point for daliy report
+def exec_daliy(excel,word,title,excelSheet="Sheet1"):
     daliyReport(abi.InputForExcel(excel,excelSheet),
-                abo.OutputForWord(word),title)
+                abo.OutputForWord(word),title=title)
+    return 0
+#Entry point for weekly report
+def exec_weekly(excelIn=None,excelOut=None,title="None",excelSheet="Sheet1",inputFileList=None):
+    weeklyReport(abi.InputForExcel(),inputFileList=inputFileList,
+                 factoryo=abi.InputForExcel("./test3.xlsx","Sheet1"))
+    #print("Hello world from exec_weekly")
     return 0
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Input and Output")
     parser.add_argument('--excel-source',dest="exs",type=str,help='excel input',required=True)
     parser.add_argument('--excel-source-sheet',dest='exss',type=str,help='excel input sheet',required=True)
@@ -132,4 +166,7 @@ if __name__ == "__main__":
     parser.add_argument('--report-title',dest='title',type=str,help='report title',required=True)
     args = parser.parse_args()
 
-    exec(excel=args.exs,excelSheet=args.exss,word=args.wot,title=args.title)
+    exec_daliy(excel=args.exs,excelSheet=args.exss,word=args.wot,title=args.title)
+    #exec_weekly(excel=args.exs,excelSheet=args.exss,word=args.wot,title=args.title)
+    #Debug
+    #exec_weekly(excel="./test2.xlsx",excelSheet="Sheet1",word="./test.docx",title="周报测试")
